@@ -1,447 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Subnautica: Genome Expedition</title>
+<title>RMS Hunks Dartboard</title>
 <style>
 body{
-margin:0;
-font-family:Arial;
-color:white;
-text-align:center;
-background:linear-gradient(#00131a,#002b3a);
-overflow:hidden;
+  font-family: Arial;
+  background: #0b1c2c;
+  color: white;
+  text-align: center;
+  margin: 0;
+  padding: 0;
 }
-body::before{
-content:"";
-position:fixed;
-width:200%;
-height:200%;
-background:
-radial-gradient(circle at 20% 30%, rgba(0,200,255,0.2), transparent 40%),
-radial-gradient(circle at 80% 60%, rgba(0,150,255,0.2), transparent 40%),
-radial-gradient(circle at 40% 80%, rgba(0,255,255,0.15), transparent 40%);
-animation:water 18s linear infinite;
+h1{
+  margin-top: 10px;
 }
-@keyframes water{
-0%{transform:translate(0,0)}
-50%{transform:translate(-10%,-5%)}
-100%{transform:translate(0,0)}
+#board{
+  position: relative;
+  width: 520px;
+  height: 520px;
+  margin: 20px auto;
+  border-radius: 50%;
+  border: 10px solid #222;
+  cursor: crosshair;
+  background: conic-gradient(
+    #b71c1c 0deg 16deg,#222 16deg 32deg,#b71c1c 32deg 48deg,#222 48deg 64deg,
+    #b71c1c 64deg 80deg,#222 80deg 96deg,#b71c1c 96deg 112deg,#222 112deg 128deg,
+    #b71c1c 128deg 144deg,#222 144deg 160deg,#b71c1c 160deg 176deg,#222 176deg 192deg,
+    #b71c1c 192deg 208deg,#222 208deg 224deg,#b71c1c 224deg 240deg,#222 240deg 256deg,
+    #b71c1c 256deg 272deg,#222 272deg 288deg,#b71c1c 288deg 304deg,#222 304deg 320deg,
+    #b71c1c 320deg 336deg,#222 336deg 360deg
+  );
 }
-#game{
-position:relative;
-z-index:2;
-padding:30px;
+.segment{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 0 0;
+  font-size: 12px;
+}
+#bull{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90px;
+  height: 90px;
+  background: gold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: black;
+  text-align: center;
+}
+.dart{
+  position: absolute;
+  width: 6px;
+  height: 40px;
+  background: #ddd;
+  border-radius: 2px;
+  transform-origin: bottom center;
+}
+.dart::before{
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid red;
+}
+.dart::after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: #333;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+#results{
+  margin-top: 20px;
+  font-size: 22px;
 }
 button{
-padding:12px 18px;
-margin:8px;
-font-size:16px;
-background:#00bcd4;
-border:none;
-border-radius:8px;
-cursor:pointer;
-}
-button:hover{
-background:#00e5ff;
-}
-#hud{
-position:fixed;
-top:10px;
-left:10px;
-background:#000c;
-padding:15px;
-border-radius:10px;
-width:260px;
-text-align:left;
-font-size:14px;
-z-index:3;
-}
-#oxygenBar{
-width:100%;
-height:14px;
-background:#333;
-border-radius:6px;
-overflow:hidden;
-}
-#oxygenFill{
-height:100%;
-background:#00e5ff;
-transition:0.3s;
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
 }
 </style>
 </head>
 <body>
-<div id="hud">
-<b>Depth:</b> <span id="depth">0</span>m<br>
-<b>Biome:</b> <span id="biome">Safe Shallows</span><br>
-<b>Signal Strength:</b> <span id="signal">0</span>%<br>
-<b>Oxygen</b>
-<div id="oxygenBar"><div id="oxygenFill"></div></div>
-<b>Inventory</b>
-<div id="inventory">None</div>
+
+<h1>🎯 RMS Hunks Dartboard</h1>
+<p>Click the board to throw your darts</p>
+
+<div id="board">
+  <div id="bull">Simon<br>Moat</div>
 </div>
-<div id="game">
-<h1>Subnautica: Genome Expedition</h1>
-<div id="story"></div>
-<div id="choices"></div>
-</div>
+
+<div id="results"></div>
+<button onclick="resetGame()">New Game</button>
+
 <script>
-/* GAME STATE */
-let inventory=[]
-let depth=0
-let oxygen=100
-let maxOxygen=100
-let signal=0
-let mapX=0
-let mapY=0
+// RMS Hunks names
+const names = [
+"Matty Wright","David Jones","Jack Cochrane","Peter Clark","James Reay",
+"Brian Johnson","Kevin Stobbart","Matthew Scott","Bruce Walker","Tony Jiminez",
+"Michael Storey","Jack Raine","Alistair Bowman","Ash Bughio","Jamie Duprey",
+"Mark Lynskey","Michael Fox","Gordon Bird","Chris Fairbairn","Alan Reddy",
+"Andrew Toes","George Smith"
+];
 
-/* HUD */
-function updateHUD(){
-document.getElementById("depth").innerText=depth
-document.getElementById("signal").innerText=signal
-document.getElementById("oxygenFill").style.width=(oxygen/maxOxygen*100)+"%"
-document.getElementById("inventory").innerHTML=
-inventory.length?inventory.join("<br>"):"None"
-updateBiome()
-}
-function updateBiome(){
-let biome="Safe Shallows"
-if(depth>100) biome="Kelp Forest 🌿"
-if(depth>300) biome="Grassy Plateaus 🪸"
-if(depth>600) biome="Deep Caverns 🦑"
-if(depth>900) biome="Alien Facility 👽"
-document.getElementById("biome").innerText=biome
-}
+let shuffled=[];
+let darts=[];
+let throws=0;
 
-/* SCENE */
-function setScene(text,options){
-document.getElementById("story").innerHTML=text
-let buttons=""
-options.forEach(o=>{buttons+=`<button onclick="${o.action}">${o.text}</button>`})
-document.getElementById("choices").innerHTML=buttons
-updateHUD()
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+function setupBoard(){
+  shuffled=shuffle([...names]);
+  const board=document.getElementById("board");
+  document.querySelectorAll(".segment").forEach(e=>e.remove());
+  let angleStep=360/shuffled.length;
+  shuffled.forEach((name,i)=>{
+    let angle=i*angleStep;
+    let label=document.createElement("div");
+    label.className="segment";
+    label.innerText=name;
+    label.style.transform="rotate("+angle+"deg) translate(210px) rotate(-"+angle+"deg)";
+    board.appendChild(label);
+  });
 }
 
-/* INVENTORY */
-function addItem(item){
-if(!inventory.includes(item)) inventory.push(item)
-updateHUD()
+// Throw with wobble animation
+function throwDart(event){
+  if(throws>=3) return;
+  const board=document.getElementById("board");
+  const rect=board.getBoundingClientRect();
+
+  let clickX=event.clientX-rect.left;
+  let clickY=event.clientY-rect.top;
+
+  // Severe chaos
+  let chaos=220;
+  let finalX=clickX+(Math.random()*chaos-chaos/2);
+  let finalY=clickY+(Math.random()*chaos-chaos/2);
+
+  finalX=Math.max(0, Math.min(rect.width, finalX));
+  finalY=Math.max(0, Math.min(rect.height, finalY));
+
+  let dart=document.createElement("div");
+  dart.className="dart";
+  board.appendChild(dart);
+
+  let startX=rect.width/2;
+  let startY=rect.height/2;
+  let duration=400;
+  let startTime=null;
+
+  function animate(time){
+    if(!startTime) startTime=time;
+    let t=(time-startTime)/duration;
+    if(t>1) t=1;
+
+    // linear move
+    let x=startX+(finalX-startX)*t;
+    let y=startY+(finalY-startY)*t;
+
+    // wobble perpendicular
+    let wobble=15;
+    let angle=Math.atan2(finalY-startY, finalX-startX)+Math.PI/2;
+    x+=Math.sin(t*Math.PI*4)*wobble*Math.sin(angle);
+    y+=Math.sin(t*Math.PI*4)*wobble*Math.cos(angle);
+
+    dart.style.left=x+"px";
+    dart.style.top=y+"px";
+    dart.style.transform="rotate("+(Math.atan2(finalY-startY, finalX-startX)*180/Math.PI)+"deg)";
+
+    if(t<1){
+      requestAnimationFrame(animate);
+    } else {
+      // detect result
+      let dx=finalX-rect.width/2;
+      let dy=finalY-rect.height/2;
+      let distance=Math.sqrt(dx*dx+dy*dy);
+      let result;
+      if(distance<45){
+        result="Simon Moat";
+      } else {
+        let angle=Math.atan2(dy,dx)*(180/Math.PI);
+        angle=(angle+360+90)%360;
+        let segment=Math.floor(angle/(360/shuffled.length));
+        result=shuffled[segment];
+      }
+      darts.push(result);
+      throws++;
+      if(throws===3) showResults();
+    }
+  }
+  requestAnimationFrame(animate);
 }
 
-/* OXYGEN */
-function checkOxygen(){
-if(oxygen<=0){
-setScene("<h2>You ran out of oxygen 💀</h2>",[{text:"Restart",action:"startGame()"}])
-}
-}
-
-/* START */
-function startGame(){
-inventory=[]
-depth=0
-oxygen=100
-maxOxygen=100
-signal=0
-mapX=0
-mapY=0
-setScene(
-`<p>Your ship crashes into the alien ocean of planet 4546-B.</p>
-<p>You are searching for your missing father Simon.</p>
-<p>A faint signal is coming from somewhere deep below.</p>
-<p>Your only hope of leaving the planet is to rebuild an escape rocket.</p>`,
-[
-{text:"Search Escape Pod",action:"searchPod()"},
-{text:"Dive into the ocean",action:"explore()"}
-]
-)
+function showResults(){
+  document.getElementById("results").innerHTML=
+    "💋 Snog: "+darts[0]+"<br>"+
+    "💍 Marry: "+darts[1]+"<br>"+
+    "🚫 Avoid: "+darts[2];
 }
 
-/* ESCAPE POD */
-function searchPod(){
-addItem("Scanner")
-setScene("<p>You recover a handheld scanner.</p>",[
-{text:"Leave pod and dive",action:"explore()"}
-])
-}
-function returnPod(){
-setScene(
-"<p>You arrive back at the Escape Pod.</p>",
-[
-{text:"Craft equipment",action:"craftMenu()"},
-{text:"Dive toward signal",action:"explore()"},
-{text:"Explore shallow reef",action:"shallowDive()"}
-]
-)
+function resetGame(){
+  document.querySelectorAll(".dart").forEach(e=>e.remove());
+  throws=0;
+  darts=[];
+  document.getElementById("results").innerHTML="";
+  setupBoard();
 }
 
-/* CRAFT MENU */
-function craftMenu(){
-let options=[]
-if(
-inventory.includes("Rocket Engine") &&
-inventory.includes("Ion Cube") &&
-inventory.includes("Metal Salvage")
-){
-options.push({text:"Build Escape Rocket",action:"buildRocket()"})
-}
-options.push({text:"Leave pod",action:"returnPod()"})
-setScene("<p>You review your collected components.</p>",options)
-}
-
-/* BUILD ROCKET & ENDINGS */
-function buildRocket(){
-// Best Ending: Rocket + Simon + Genome Antidote
-if(
-inventory.includes("Simon") &&
-inventory.includes("Genome Antidote") &&
-inventory.includes("Rocket Engine") &&
-inventory.includes("Ion Cube") &&
-inventory.includes("Metal Salvage")
-){
-setScene(
-`<h2>Best Ending ⭐</h2>
-<p>You launch the escape rocket with Simon beside you.</p>
-<p>The Genome Antidote will cure the alien infection threatening humanity.</p>
-<p>You return home as heroes.</p>`,
-[{text:"Play Again",action:"startGame()"}]
-)
-return
-}
-// Good Ending: Rocket + Simon
-if(
-inventory.includes("Simon") &&
-inventory.includes("Rocket Engine") &&
-inventory.includes("Ion Cube") &&
-inventory.includes("Metal Salvage")
-){
-setScene(
-`<h2>Good Ending</h2>
-<p>You launch the rocket with your father Simon.</p>
-<p>However, the Genome Antidote remains on the planet. Humanity may still be in danger.</p>`,
-[{text:"Play Again",action:"startGame()"}]
-)
-return
-}
-// Escape Alone: Rocket only
-if(
-inventory.includes("Rocket Engine") &&
-inventory.includes("Ion Cube") &&
-inventory.includes("Metal Salvage")
-){
-setScene(
-`<h2>Escape Ending</h2>
-<p>You launch the rocket alone, leaving the mysteries of planet 4546-B behind.</p>`,
-[{text:"Play Again",action:"startGame()"}]
-)
-return
-}
-// Peaceful Life: Simon only
-if(inventory.includes("Simon")){
-setScene(
-`<h2>Peaceful Life Ending 🌊</h2>
-<p>You and your father Simon decide to remain on Planet 4546-B.</p>
-<p>With your knowledge and the ocean’s resources, you build a simple shelter and live peacefully, exploring the alien seas together.</p>`,
-[{text:"Play Again",action:"startGame()"}]
-)
-return
-}
-// Default: cannot escape
-setScene(
-`<h2>No Escape</h2>
-<p>You lack the rocket components. You are stranded on Planet 4546-B.</p>`,
-[{text:"Play Again",action:"startGame()"}]
-)
-}
-
-/* SURFACE */
-function surface(){
-oxygen=maxOxygen
-setScene(
-"<p>You reach the surface and refill your oxygen.</p>",
-[
-{text:"Dive again",action:"explore()"},
-{text:"Return to Escape Pod",action:"returnPod()"}
-]
-)
-}
-
-/* EXPLORATION */
-function explore(){
-depth+=Math.floor(Math.random()*80)+40
-oxygen-=10
-signal=Math.min(signal+10,100)
-checkOxygen()
-setScene(
-"<p>You swim deeper into the alien ocean.</p>",
-[
-{text:"Swim North",action:"move('n')"},
-{text:"Swim South",action:"move('s')"},
-{text:"Swim East",action:"move('e')"},
-{text:"Swim West",action:"move('w')"},
-{text:"Return to surface",action:"surface()"},
-{text:"Return to Escape Pod",action:"returnPod()"}
-]
-)
-}
-
-/* MAP MOVEMENT */
-function move(dir){
-if(dir=="n") mapY++
-if(dir=="s") mapY--
-if(dir=="e") mapX++
-if(dir=="w") mapX--
-oxygen-=5
-checkOxygen()
-randomEvent()
-}
-
-/* SHALLOW DIVE */
-function shallowDive(){
-depth+=20
-oxygen-=5
-randomEvent()
-}
-
-/* EVENTS */
-function randomEvent(){
-let r=Math.random()
-if(r<0.25) creatureEvent()
-else if(r<0.45) materialEvent()
-else if(r<0.65) wreckEvent()
-else if(r<0.85) rareFind()
-else leviathan()
-}
-
-/* CREATURE */
-function creatureEvent(){
-setScene(
-"<p>A strange glowing creature swims nearby 🐟</p>",
-[
-{text:"Scan creature",action:"scanCreature()"},
-{text:"Ignore",action:"explore()"}
-]
-)
-}
-function scanCreature(){
-addItem("Creature Scan")
-setScene("<p>New alien species recorded.</p>",[{text:"Continue exploring",action:"explore()"}])
-}
-
-/* COMMON MATERIAL */
-function materialEvent(){
-setScene(
-"<p>You discover scattered metal wreckage.</p>",
-[
-{text:"Collect Metal Salvage",action:"collectMaterial()"},
-{text:"Leave it",action:"explore()"}
-]
-)
-}
-function collectMaterial(){
-addItem("Metal Salvage")
-setScene("Metal Salvage added to inventory.",[{text:"Continue exploring",action:"explore()"}])
-}
-
-/* WRECK */
-function wreckEvent(){
-setScene(
-"<p>You discover a damaged research pod.</p>",
-[
-{text:"Search wreck",action:"searchWreck()"},
-{text:"Leave",action:"explore()"}
-]
-)
-}
-function searchWreck(){
-signal+=20
-addItem("Data Log")
-setScene(
-"<p>You recover research logs mentioning a lost rocket engine fragment.</p>",
-[{text:"Follow signal deeper",action:"explore()"}]
-)
-}
-
-/* RARE FINDS / STORY ITEMS */
-function rareFind(){
-if(!inventory.includes("Rocket Engine") && Math.random()<0.5){
-setScene(
-"<p>You discover a massive engine fragment buried in the seabed.</p>",
-[
-{text:"Recover Rocket Engine",action:"collectPart('Rocket Engine')"},
-{text:"Leave it",action:"explore()"}
-]
-)
-return
-}
-if(!inventory.includes("Ion Cube") && depth>600){
-setScene(
-"<p>You find an alien artifact glowing with energy.</p>",
-[
-{text:"Take Ion Cube",action:"collectPart('Ion Cube')"},
-{text:"Leave it",action:"explore()"}
-]
-)
-return
-}
-// Find Simon
-if(!inventory.includes("Simon") && signal>70){
-setScene(
-"<p>You discover a hidden research base. Inside is your father Simon, alive but weak.</p>",
-[
-{text:"Rescue Simon",action:"collectPart('Simon')"},
-{text:"Leave the base",action:"explore()"}
-]
-)
-return
-}
-// Find Genome Antidote
-if(!inventory.includes("Genome Antidote") && depth>800){
-setScene(
-"<p>You find an alien containment lab holding a glowing Genome Antidote.</p>",
-[
-{text:"Take Antidote",action:"collectPart('Genome Antidote')"},
-{text:"Leave it",action:"explore()"}
-]
-)
-return
-}
-explore()
-}
-function collectPart(item){
-addItem(item)
-setScene(
-`${item} secured.`,
-[
-{text:"Continue exploring",action:"explore()"},
-{text:"Return to Escape Pod",action:"returnPod()"}
-]
-)
-}
-
-/* LEVIATHAN */
-function leviathan(){
-setScene(
-"<h2>Leviathan Detected 🐉</h2>",
-[
-{text:"Evade",action:"evade()"},
-{text:"Panic",action:"panic()"}
-]
-)
-}
-function evade(){
-if(Math.random()<0.5){
-setScene("<p>You escape the massive creature!</p>",[{text:"Keep exploring",action:"explore()"}])
-}else{
-setScene("<p>The Leviathan catches you.</p>",[{text:"Restart",action:"startGame()"}])
-}
-}
-function panic(){
-setScene("<p>You panic and lose control.</p>",[{text:"Restart",action:"startGame()"}])
-}
-
-/* START GAME */
-startGame()
+document.getElementById("board").addEventListener("click",throwDart);
+setupBoard();
 </script>
+
 </body>
 </html>
