@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Subnautica: Genome Expedition</title>
-
 <style>
-
 body{
 margin:0;
 font-family:Arial;
@@ -14,9 +12,6 @@ text-align:center;
 background:linear-gradient(#00131a,#002b3a);
 overflow:hidden;
 }
-
-/* animated ocean */
-
 body::before{
 content:"";
 position:fixed;
@@ -28,19 +23,16 @@ radial-gradient(circle at 80% 60%, rgba(0,150,255,0.2), transparent 40%),
 radial-gradient(circle at 40% 80%, rgba(0,255,255,0.15), transparent 40%);
 animation:water 18s linear infinite;
 }
-
 @keyframes water{
 0%{transform:translate(0,0)}
 50%{transform:translate(-10%,-5%)}
 100%{transform:translate(0,0)}
 }
-
 #game{
 position:relative;
 z-index:2;
 padding:30px;
 }
-
 button{
 padding:12px 18px;
 margin:8px;
@@ -50,11 +42,9 @@ border:none;
 border-radius:8px;
 cursor:pointer;
 }
-
 button:hover{
 background:#00e5ff;
 }
-
 #hud{
 position:fixed;
 top:10px;
@@ -67,7 +57,6 @@ text-align:left;
 font-size:14px;
 z-index:3;
 }
-
 #oxygenBar{
 width:100%;
 height:14px;
@@ -75,52 +64,30 @@ background:#333;
 border-radius:6px;
 overflow:hidden;
 }
-
 #oxygenFill{
 height:100%;
 background:#00e5ff;
 transition:0.3s;
 }
-
 </style>
 </head>
-
 <body>
-
 <div id="hud">
-
 <b>Depth:</b> <span id="depth">0</span>m<br>
-
 <b>Biome:</b> <span id="biome">Safe Shallows</span><br>
-
 <b>Signal Strength:</b> <span id="signal">0</span>%<br>
-
 <b>Oxygen</b>
-
-<div id="oxygenBar">
-<div id="oxygenFill"></div>
-</div>
-
+<div id="oxygenBar"><div id="oxygenFill"></div></div>
 <b>Inventory</b>
-
 <div id="inventory">None</div>
-
 </div>
-
 <div id="game">
-
 <h1>Subnautica: Genome Expedition</h1>
-
 <div id="story"></div>
-
 <div id="choices"></div>
-
 </div>
-
 <script>
-
 /* GAME STATE */
-
 let inventory=[]
 let depth=0
 let oxygen=100
@@ -130,85 +97,47 @@ let mapX=0
 let mapY=0
 
 /* HUD */
-
 function updateHUD(){
-
 document.getElementById("depth").innerText=depth
-
 document.getElementById("signal").innerText=signal
-
 document.getElementById("oxygenFill").style.width=(oxygen/maxOxygen*100)+"%"
-
 document.getElementById("inventory").innerHTML=
 inventory.length?inventory.join("<br>"):"None"
-
 updateBiome()
-
 }
-
-/* BIOMES */
-
 function updateBiome(){
-
 let biome="Safe Shallows"
-
 if(depth>100) biome="Kelp Forest 🌿"
 if(depth>300) biome="Grassy Plateaus 🪸"
 if(depth>600) biome="Deep Caverns 🦑"
 if(depth>900) biome="Alien Facility 👽"
-
 document.getElementById("biome").innerText=biome
-
 }
 
-/* SCENE SYSTEM */
-
+/* SCENE */
 function setScene(text,options){
-
 document.getElementById("story").innerHTML=text
-
 let buttons=""
-
-options.forEach(o=>{
-buttons+=`<button onclick="${o.action}">${o.text}</button>`
-})
-
+options.forEach(o=>{buttons+=`<button onclick="${o.action}">${o.text}</button>`})
 document.getElementById("choices").innerHTML=buttons
-
 updateHUD()
-
 }
 
 /* INVENTORY */
-
 function addItem(item){
-
-if(!inventory.includes(item))
-inventory.push(item)
-
+if(!inventory.includes(item)) inventory.push(item)
 updateHUD()
-
 }
 
 /* OXYGEN */
-
 function checkOxygen(){
-
 if(oxygen<=0){
-
-setScene(
-"<h2>You ran out of oxygen 💀</h2>",
-[{text:"Restart",action:"startGame()"}]
-)
-
+setScene("<h2>You ran out of oxygen 💀</h2>",[{text:"Restart",action:"startGame()"}])
 }
-
 }
 
 /* START */
-
 function startGame(){
-
 inventory=[]
 depth=0
 oxygen=100
@@ -216,126 +145,135 @@ maxOxygen=100
 signal=0
 mapX=0
 mapY=0
-
 setScene(
-
 `<p>Your ship crashes into the alien ocean of planet 4546-B.</p>
-
 <p>You are searching for your missing father Simon.</p>
-
-<p>A faint signal is coming from somewhere deep below.</p>`,
-
+<p>A faint signal is coming from somewhere deep below.</p>
+<p>Your only hope of leaving the planet is to rebuild an escape rocket.</p>`,
 [
 {text:"Search Escape Pod",action:"searchPod()"},
 {text:"Dive into the ocean",action:"explore()"}
 ]
-
 )
-
 }
 
-/* POD */
-
+/* ESCAPE POD */
 function searchPod(){
-
 addItem("Scanner")
-
-setScene(
-
-"<p>You recover a handheld scanner.</p>",
-
-[
+setScene("<p>You recover a handheld scanner.</p>",[
 {text:"Leave pod and dive",action:"explore()"}
-]
-
-)
-
+])
 }
-
-/* SURFACE */
-
-function surface(){
-
-oxygen=maxOxygen
-
-setScene(
-
-"<p>You reach the surface and refill your oxygen.</p>",
-
-[
-{text:"Dive again",action:"explore()"},
-{text:"Return to Escape Pod",action:"returnPod()"}
-]
-
-)
-
-}
-
-/* ESCAPE POD HUB */
-
 function returnPod(){
-
 setScene(
-
 "<p>You arrive back at the Escape Pod.</p>",
-
 [
 {text:"Craft equipment",action:"craftMenu()"},
 {text:"Dive toward signal",action:"explore()"},
 {text:"Explore shallow reef",action:"shallowDive()"}
 ]
-
 )
-
 }
 
 /* CRAFT MENU */
-
 function craftMenu(){
-
 let options=[]
-
-if(inventory.includes("Titanium") && inventory.includes("Fiber") && !inventory.includes("Reinforced Suit"))
-options.push({text:"Craft Reinforced Suit",action:"craftSuit()"})
-
+if(
+inventory.includes("Rocket Engine") &&
+inventory.includes("Ion Cube") &&
+inventory.includes("Metal Salvage")
+){
+options.push({text:"Build Escape Rocket",action:"buildRocket()"})
+}
 options.push({text:"Leave pod",action:"returnPod()"})
-
-setScene("<p>You organize your materials.</p>",options)
-
+setScene("<p>You review your collected components.</p>",options)
 }
 
-function craftSuit(){
-
-addItem("Reinforced Suit")
-
-maxOxygen=140
-
+/* BUILD ROCKET & ENDINGS */
+function buildRocket(){
+// Best Ending: Rocket + Simon + Genome Antidote
+if(
+inventory.includes("Simon") &&
+inventory.includes("Genome Antidote") &&
+inventory.includes("Rocket Engine") &&
+inventory.includes("Ion Cube") &&
+inventory.includes("Metal Salvage")
+){
 setScene(
-
-"<p>You craft a Reinforced Suit. Oxygen capacity increased.</p>",
-
-[
-{text:"Return to pod",action:"returnPod()"}
-]
-
+`<h2>Best Ending ⭐</h2>
+<p>You launch the escape rocket with Simon beside you.</p>
+<p>The Genome Antidote will cure the alien infection threatening humanity.</p>
+<p>You return home as heroes.</p>`,
+[{text:"Play Again",action:"startGame()"}]
 )
+return
+}
+// Good Ending: Rocket + Simon
+if(
+inventory.includes("Simon") &&
+inventory.includes("Rocket Engine") &&
+inventory.includes("Ion Cube") &&
+inventory.includes("Metal Salvage")
+){
+setScene(
+`<h2>Good Ending</h2>
+<p>You launch the rocket with your father Simon.</p>
+<p>However, the Genome Antidote remains on the planet. Humanity may still be in danger.</p>`,
+[{text:"Play Again",action:"startGame()"}]
+)
+return
+}
+// Escape Alone: Rocket only
+if(
+inventory.includes("Rocket Engine") &&
+inventory.includes("Ion Cube") &&
+inventory.includes("Metal Salvage")
+){
+setScene(
+`<h2>Escape Ending</h2>
+<p>You launch the rocket alone, leaving the mysteries of planet 4546-B behind.</p>`,
+[{text:"Play Again",action:"startGame()"}]
+)
+return
+}
+// Peaceful Life: Simon only
+if(inventory.includes("Simon")){
+setScene(
+`<h2>Peaceful Life Ending 🌊</h2>
+<p>You and your father Simon decide to remain on Planet 4546-B.</p>
+<p>With your knowledge and the ocean’s resources, you build a simple shelter and live peacefully, exploring the alien seas together.</p>`,
+[{text:"Play Again",action:"startGame()"}]
+)
+return
+}
+// Default: cannot escape
+setScene(
+`<h2>No Escape</h2>
+<p>You lack the rocket components. You are stranded on Planet 4546-B.</p>`,
+[{text:"Play Again",action:"startGame()"}]
+)
+}
 
+/* SURFACE */
+function surface(){
+oxygen=maxOxygen
+setScene(
+"<p>You reach the surface and refill your oxygen.</p>",
+[
+{text:"Dive again",action:"explore()"},
+{text:"Return to Escape Pod",action:"returnPod()"}
+]
+)
 }
 
 /* EXPLORATION */
-
 function explore(){
-
 depth+=Math.floor(Math.random()*80)+40
 oxygen-=10
 signal=Math.min(signal+10,100)
-
 checkOxygen()
-
 setScene(
-
 "<p>You swim deeper into the alien ocean.</p>",
-
 [
 {text:"Swim North",action:"move('n')"},
 {text:"Swim South",action:"move('s')"},
@@ -344,227 +282,166 @@ setScene(
 {text:"Return to surface",action:"surface()"},
 {text:"Return to Escape Pod",action:"returnPod()"}
 ]
-
 )
-
 }
 
 /* MAP MOVEMENT */
-
 function move(dir){
-
 if(dir=="n") mapY++
 if(dir=="s") mapY--
 if(dir=="e") mapX++
 if(dir=="w") mapX--
-
 oxygen-=5
-
 checkOxygen()
-
 randomEvent()
-
 }
 
-/* SHALLOW ROUTE */
-
+/* SHALLOW DIVE */
 function shallowDive(){
-
 depth+=20
 oxygen-=5
-
 randomEvent()
-
 }
 
 /* EVENTS */
-
 function randomEvent(){
-
 let r=Math.random()
-
-if(r<0.3) creatureEvent()
-else if(r<0.55) materialEvent()
-else if(r<0.75) wreckEvent()
-else if(r<0.9) calmEvent()
+if(r<0.25) creatureEvent()
+else if(r<0.45) materialEvent()
+else if(r<0.65) wreckEvent()
+else if(r<0.85) rareFind()
 else leviathan()
-
 }
 
 /* CREATURE */
-
 function creatureEvent(){
-
 setScene(
-
 "<p>A strange glowing creature swims nearby 🐟</p>",
-
 [
 {text:"Scan creature",action:"scanCreature()"},
 {text:"Ignore",action:"explore()"}
 ]
-
 )
-
 }
-
 function scanCreature(){
-
 addItem("Creature Scan")
-
-setScene(
-
-"<p>New alien species recorded.</p>",
-
-[
-{text:"Continue exploring",action:"explore()"}
-]
-
-)
-
+setScene("<p>New alien species recorded.</p>",[{text:"Continue exploring",action:"explore()"}])
 }
 
-/* MATERIALS */
-
+/* COMMON MATERIAL */
 function materialEvent(){
-
-let materials=["Titanium","Fiber","Quartz"]
-
-let m=materials[Math.floor(Math.random()*materials.length)]
-
 setScene(
-
-`<p>You find ${m} deposits.</p>`,
-
+"<p>You discover scattered metal wreckage.</p>",
 [
-{text:`Collect ${m}`,action:`collectMaterial('${m}')`},
-{text:"Leave",action:"explore()"}
+{text:"Collect Metal Salvage",action:"collectMaterial()"},
+{text:"Leave it",action:"explore()"}
 ]
-
 )
-
 }
-
-function collectMaterial(m){
-
-addItem(m)
-
-setScene(
-
-`${m} added to inventory.`,
-
-[
-{text:"Continue exploring",action:"explore()"}
-]
-
-)
-
+function collectMaterial(){
+addItem("Metal Salvage")
+setScene("Metal Salvage added to inventory.",[{text:"Continue exploring",action:"explore()"}])
 }
 
 /* WRECK */
-
 function wreckEvent(){
-
 setScene(
-
 "<p>You discover a damaged research pod.</p>",
-
 [
 {text:"Search wreck",action:"searchWreck()"},
 {text:"Leave",action:"explore()"}
 ]
-
 )
-
 }
-
 function searchWreck(){
-
 signal+=20
-
 addItem("Data Log")
-
 setScene(
-
-"<p>You recover Simon's research data.</p>",
-
-[
-{text:"Follow signal deeper",action:"explore()"}
-]
-
+"<p>You recover research logs mentioning a lost rocket engine fragment.</p>",
+[{text:"Follow signal deeper",action:"explore()"}]
 )
-
 }
 
-/* CALM */
-
-function calmEvent(){
-
+/* RARE FINDS / STORY ITEMS */
+function rareFind(){
+if(!inventory.includes("Rocket Engine") && Math.random()<0.5){
 setScene(
-
-"<p>The ocean is quiet.</p>",
-
+"<p>You discover a massive engine fragment buried in the seabed.</p>",
 [
-{text:"Continue exploring",action:"explore()"}
+{text:"Recover Rocket Engine",action:"collectPart('Rocket Engine')"},
+{text:"Leave it",action:"explore()"}
 ]
-
 )
-
+return
+}
+if(!inventory.includes("Ion Cube") && depth>600){
+setScene(
+"<p>You find an alien artifact glowing with energy.</p>",
+[
+{text:"Take Ion Cube",action:"collectPart('Ion Cube')"},
+{text:"Leave it",action:"explore()"}
+]
+)
+return
+}
+// Find Simon
+if(!inventory.includes("Simon") && signal>70){
+setScene(
+"<p>You discover a hidden research base. Inside is your father Simon, alive but weak.</p>",
+[
+{text:"Rescue Simon",action:"collectPart('Simon')"},
+{text:"Leave the base",action:"explore()"}
+]
+)
+return
+}
+// Find Genome Antidote
+if(!inventory.includes("Genome Antidote") && depth>800){
+setScene(
+"<p>You find an alien containment lab holding a glowing Genome Antidote.</p>",
+[
+{text:"Take Antidote",action:"collectPart('Genome Antidote')"},
+{text:"Leave it",action:"explore()"}
+]
+)
+return
+}
+explore()
+}
+function collectPart(item){
+addItem(item)
+setScene(
+`${item} secured.`,
+[
+{text:"Continue exploring",action:"explore()"},
+{text:"Return to Escape Pod",action:"returnPod()"}
+]
+)
 }
 
 /* LEVIATHAN */
-
 function leviathan(){
-
 setScene(
-
 "<h2>Leviathan Detected 🐉</h2>",
-
 [
 {text:"Evade",action:"evade()"},
 {text:"Panic",action:"panic()"}
 ]
-
 )
-
 }
-
 function evade(){
-
 if(Math.random()<0.5){
-
-setScene(
-"<p>You escape the massive creature!</p>",
-[{text:"Keep exploring",action:"explore()"}]
-)
-
+setScene("<p>You escape the massive creature!</p>",[{text:"Keep exploring",action:"explore()"}])
+}else{
+setScene("<p>The Leviathan catches you.</p>",[{text:"Restart",action:"startGame()"}])
 }
-
-else{
-
-setScene(
-"<p>The Leviathan catches you.</p>",
-[{text:"Restart",action:"startGame()"}]
-)
-
 }
-
-}
-
 function panic(){
-
-setScene(
-"<p>You panic and lose control.</p>",
-[{text:"Restart",action:"startGame()"}]
-)
-
+setScene("<p>You panic and lose control.</p>",[{text:"Restart",action:"startGame()"}])
 }
 
-/* START */
-
+/* START GAME */
 startGame()
-
 </script>
-
 </body>
 </html>
