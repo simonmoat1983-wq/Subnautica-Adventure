@@ -56,10 +56,10 @@ let maxDepthWithoutSuit=300;
 let maxDepthWithSuit=800;
 let maxDepthWithModule=1200;
 
-/* HELPER FUNCTIONS */
+/* HUD UPDATE */
 function updateHUD(){
   document.getElementById("depth").innerText=depth;
-  document.getElementById("oxygenFill").style.width=oxygen+"%";
+  document.getElementById("oxygenFill").style.width=Math.min(oxygen,100)+"%";
   document.getElementById("signal").innerText=Math.min(Math.floor(depth/4),100);
   document.getElementById("inventory").innerHTML = inventory.length?inventory.join("<br>"):"None";
   updateBiome();
@@ -73,6 +73,8 @@ function updateBiome(){
   if(depth>1100)b="Abyssal Trench";
   document.getElementById("biome").innerText=b;
 }
+
+/* SCENE SETTER */
 function setScene(text,options){
   document.getElementById("story").innerHTML=text;
   let btns="";
@@ -80,12 +82,14 @@ function setScene(text,options){
   document.getElementById("choices").innerHTML=btns;
   updateHUD();
 }
+
+/* INVENTORY */
 function addItem(item){
   if(!inventory.includes(item))inventory.push(item);
   updateHUD();
 }
 
-/* GAME START */
+/* START GAME */
 function startGame(){
   inventory=[]; depth=0; oxygen=100;
   setScene(
@@ -94,69 +98,91 @@ function startGame(){
      <p>A weak PDA signal reads: <b>"Max… follow the pulse…"</b></p>
      <p>Your ship crashes into the alien ocean below.</p>`,
      [
-       {text:"Search the escape pod",action:"podSearch()"},
+       {text:"Search the escape pod",action:"searchEscapePod()"},
        {text:"Dive immediately",action:"firstDive()"}
      ]
   );
 }
 
 /* ESCAPE POD */
-function podSearch(){
+function searchEscapePod(){
   setScene(
-    `<p>You search the pod and find scattered materials:</p>`,
+    `<p>You search the pod and find scattered items:</p>`,
     [
-      {text:"Take Repair Tool",action:"takeRepairTool()"},
-      {text:"Take High-Capacity Tank",action:"takeTank()"},
-      {text:"Skip gear and dive",action:"firstDive()"}
+      {text:"Collect Metal Fragments", action:"collectMetal()"},
+      {text:"Collect High-Capacity Tank", action:"collectTank()"},
+      {text:"Skip gear and dive", action:"firstDive()"}
     ]
   );
 }
-function takeRepairTool(){ addItem("Repair Tool"); firstDive(); }
-function takeTank(){ addItem("High O₂ Tank"); oxygen=150; firstDive(); }
+function collectMetal(){ addItem("Metal Fragments"); firstDive(); }
+function collectTank(){ addItem("High O₂ Tank"); oxygen=150; firstDive(); }
+
+/* SHALLOW REEF MATERIAL */
+function exploreShallows(){
+  setScene(
+    `<p>Near the shallow reefs you find some Fiber tangled in seaweed.</p>`,
+    [{text:"Collect Fiber", action:"collectFiber()"}]
+  );
+}
+function collectFiber(){ addItem("Fiber"); craftReinforcedSuit(); }
+
+/* CRAFTING */
+function craftReinforcedSuit(){
+  if(inventory.includes("Fiber") && inventory.includes("Metal Fragments")){
+    addItem("Reinforced Suit");
+    setScene("<p>You craft a Reinforced Suit! You can now explore the Kelp Forest safely.</p>",[{text:"Continue",action:"firstDive()"}]);
+  } else {
+    setScene("<p>You don't have enough materials to craft the suit yet.</p>",[{text:"Continue",action:"firstDive()"}]);
+  }
+}
 
 /* FIRST DIVE */
 function firstDive(){
   depth+=50; oxygen-=5;
-  setScene(
-    `<p>You plunge into the alien ocean.</p>
-     <p>Two paths appear:</p>`,
-    [
-      {text:"Explore Kelp Forest",action:"goKelp()"},
-      {text:"Swim toward the signal",action:"diveDeeper()"}
-    ]
-  );
+
+  let options = [];
+  if(inventory.includes("Reinforced Suit")){
+    options.push({text:"Explore Kelp Forest",action:"goKelp()"});
+  } else {
+    options.push({text:"Cannot enter Kelp Forest yet (need Reinforced Suit)",action:"firstDive()"});
+  }
+  options.push({text:"Swim toward the signal",action:"diveDeeper()"});
+
+  setScene(`<p>You plunge into the alien ocean.</p><p>Two paths appear:</p>`, options);
 }
 
 /* KELP FOREST */
 function goKelp(){
   depth+=120; oxygen-=10;
-  setScene(
-    `<p>The Kelp Forest teems with life.</p>
-     <p>You spot glinting materials and strange creatures.</p>`,
-    [
-      {text:"Collect Fiber",action:"collectFiber()"},
-      {text:"Continue deeper toward signal",action:"diveDeeper()"}
-    ]
-  );
-}
-function collectFiber(){ addItem("Fiber"); diveDeeper(); }
-
-/* DEEP DIVE */
-function diveDeeper(){
-  depth+=150; oxygen-=15;
   if(depth>maxDepthWithoutSuit && !inventory.includes("Reinforced Suit")){
     alert("Pressure is too high! You need a Reinforced Suit.");
     return;
   }
+  setScene(
+    `<p>The Kelp Forest teems with life. You spot Fiber here too.</p>`,
+    [
+      {text:"Collect Fiber",action:"collectFiber()"},
+      {text:"Continue toward signal",action:"diveDeeper()"}
+    ]
+  );
+}
+
+/* DEEPER DIVE */
+function diveDeeper(){
+  depth+=150; oxygen-=15;
+  if(depth>maxDepthWithoutSuit && !inventory.includes("Reinforced Suit")){
+    alert("Pressure too high! You need a Reinforced Suit.");
+    return;
+  }
   if(depth>maxDepthWithSuit && !inventory.includes("Depth Module")){
-    alert("Even with Reinforced Suit, you need a Depth Module.");
+    alert("Even with Reinforced Suit, you need a Depth Module to go deeper!");
     return;
   }
   if(oxygen<=0){ leviathanAttack(); return; }
   randomEncounter();
 }
 
-/* RANDOM ENCOUNTERS */
 function randomEncounter(){
   let r=Math.random();
   if(r<0.2){
@@ -167,6 +193,7 @@ function randomEncounter(){
     leviathanAttack();
   } else { continueDive(); }
 }
+
 function continueDive(){ setScene(
   "<p>The signal pulse grows stronger.</p>",
   [
@@ -189,12 +216,6 @@ function checkProgression(){
   else diveDeeper();
 }
 
-function craftReinforcedSuit(){
-  addItem("Reinforced Suit");
-  maxDepthWithSuit=800;
-  setScene("<p>You craft a Reinforced Suit! You can dive deeper now.</p>",[{text:"Continue",action:"diveDeeper()"}]);
-}
-
 function takePrawn(){ addItem("Prawn Suit"); maxDepthWithModule=1200; setScene("<p>Prawn Suit acquired!</p>",[{text:"Continue",action:"diveDeeper()"}]);}
 
 /* FIND SIMON & SECRETS */
@@ -204,6 +225,7 @@ function findSimon(){
     [{text:"Enter base",action:"baseEntry()"}]
   );
 }
+
 function baseEntry(){
   setScene(
     `<p>Inside, you find logs describing:</p>
@@ -269,7 +291,7 @@ function leviathanAttack(){
 
 function surfaceReturn(){ oxygen=100; setScene("<p>You return to surface and plan next dive.</p>",[{text:"Dive again",action:"firstDive()"}]);}
 
-/* START GAME */
+/* START */
 startGame();
 </script>
 </body>
