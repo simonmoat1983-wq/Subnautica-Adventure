@@ -7,32 +7,31 @@
 <style>
 
 body{
+margin:0;
 font-family:Arial;
 color:white;
 text-align:center;
-margin:0;
-overflow:hidden;
 background:linear-gradient(#00131a,#002b3a);
+overflow:hidden;
 }
 
-/* animated water */
+/* animated ocean */
+
 body::before{
 content:"";
 position:fixed;
-top:0;
-left:0;
 width:200%;
 height:200%;
 background:
-radial-gradient(circle at 20% 30%, rgba(0,200,255,0.15), transparent 40%),
-radial-gradient(circle at 70% 60%, rgba(0,150,255,0.2), transparent 40%),
-radial-gradient(circle at 50% 80%, rgba(0,255,255,0.1), transparent 40%);
-animation:waterMove 20s linear infinite;
+radial-gradient(circle at 20% 30%, rgba(0,200,255,0.2), transparent 40%),
+radial-gradient(circle at 80% 60%, rgba(0,150,255,0.2), transparent 40%),
+radial-gradient(circle at 40% 80%, rgba(0,255,255,0.15), transparent 40%);
+animation:water 18s linear infinite;
 }
 
-@keyframes waterMove{
+@keyframes water{
 0%{transform:translate(0,0)}
-50%{transform:translate(-10%, -5%)}
+50%{transform:translate(-10%,-5%)}
 100%{transform:translate(0,0)}
 }
 
@@ -79,7 +78,6 @@ overflow:hidden;
 
 #oxygenFill{
 height:100%;
-width:100%;
 background:#00e5ff;
 transition:0.3s;
 }
@@ -90,17 +88,23 @@ transition:0.3s;
 <body>
 
 <div id="hud">
-<b>Depth:</b> <span id="depth">0</span>m<br>
 
-<b>Oxygen:</b>
-<div id="oxygenBar"><div id="oxygenFill"></div></div>
+<b>Depth:</b> <span id="depth">0</span>m<br>
 
 <b>Biome:</b> <span id="biome">Safe Shallows</span><br>
 
-<b>Signal:</b> <span id="signal">0</span>%<br>
+<b>Signal Strength:</b> <span id="signal">0</span>%<br>
+
+<b>Oxygen</b>
+
+<div id="oxygenBar">
+<div id="oxygenFill"></div>
+</div>
 
 <b>Inventory</b>
+
 <div id="inventory">None</div>
+
 </div>
 
 <div id="game">
@@ -108,6 +112,7 @@ transition:0.3s;
 <h1>Subnautica: Genome Expedition</h1>
 
 <div id="story"></div>
+
 <div id="choices"></div>
 
 </div>
@@ -120,18 +125,21 @@ let inventory=[]
 let depth=0
 let oxygen=100
 let maxOxygen=100
-
 let signal=0
+let mapX=0
+let mapY=0
 
 /* HUD */
 
 function updateHUD(){
 
 document.getElementById("depth").innerText=depth
-document.getElementById("oxygenFill").style.width=(oxygen/maxOxygen*100)+"%"
+
 document.getElementById("signal").innerText=signal
 
-document.getElementById("inventory").innerHTML =
+document.getElementById("oxygenFill").style.width=(oxygen/maxOxygen*100)+"%"
+
+document.getElementById("inventory").innerHTML=
 inventory.length?inventory.join("<br>"):"None"
 
 updateBiome()
@@ -146,7 +154,7 @@ let biome="Safe Shallows"
 
 if(depth>100) biome="Kelp Forest 🌿"
 if(depth>300) biome="Grassy Plateaus 🪸"
-if(depth>600) biome="Deep Caves 🦑"
+if(depth>600) biome="Deep Caverns 🦑"
 if(depth>900) biome="Alien Facility 👽"
 
 document.getElementById("biome").innerText=biome
@@ -206,18 +214,20 @@ depth=0
 oxygen=100
 maxOxygen=100
 signal=0
+mapX=0
+mapY=0
 
 setScene(
 
-`<p>Your ship crashes into the ocean of planet 4546-B.</p>
+`<p>Your ship crashes into the alien ocean of planet 4546-B.</p>
 
-<p>You are searching for your father Simon's lost research.</p>
+<p>You are searching for your missing father Simon.</p>
 
-<p>A mysterious signal pulses from the deep.</p>`,
+<p>A faint signal is coming from somewhere deep below.</p>`,
 
 [
 {text:"Search Escape Pod",action:"searchPod()"},
-{text:"Dive into ocean",action:"dive()"}
+{text:"Dive into the ocean",action:"explore()"}
 ]
 
 )
@@ -232,19 +242,89 @@ addItem("Scanner")
 
 setScene(
 
-"<p>You find a scanner tool 🔎</p>",
+"<p>You recover a handheld scanner.</p>",
 
 [
-{text:"Dive",action:"dive()"}
+{text:"Leave pod and dive",action:"explore()"}
 ]
 
 )
 
 }
 
-/* MAIN LOOP */
+/* SURFACE */
 
-function dive(){
+function surface(){
+
+oxygen=maxOxygen
+
+setScene(
+
+"<p>You reach the surface and refill your oxygen.</p>",
+
+[
+{text:"Dive again",action:"explore()"},
+{text:"Return to Escape Pod",action:"returnPod()"}
+]
+
+)
+
+}
+
+/* ESCAPE POD HUB */
+
+function returnPod(){
+
+setScene(
+
+"<p>You arrive back at the Escape Pod.</p>",
+
+[
+{text:"Craft equipment",action:"craftMenu()"},
+{text:"Dive toward signal",action:"explore()"},
+{text:"Explore shallow reef",action:"shallowDive()"}
+]
+
+)
+
+}
+
+/* CRAFT MENU */
+
+function craftMenu(){
+
+let options=[]
+
+if(inventory.includes("Titanium") && inventory.includes("Fiber") && !inventory.includes("Reinforced Suit"))
+options.push({text:"Craft Reinforced Suit",action:"craftSuit()"})
+
+options.push({text:"Leave pod",action:"returnPod()"})
+
+setScene("<p>You organize your materials.</p>",options)
+
+}
+
+function craftSuit(){
+
+addItem("Reinforced Suit")
+
+maxOxygen=140
+
+setScene(
+
+"<p>You craft a Reinforced Suit. Oxygen capacity increased.</p>",
+
+[
+{text:"Return to pod",action:"returnPod()"}
+]
+
+)
+
+}
+
+/* EXPLORATION */
+
+function explore(){
 
 depth+=Math.floor(Math.random()*80)+40
 oxygen-=10
@@ -252,52 +332,92 @@ signal=Math.min(signal+10,100)
 
 checkOxygen()
 
-randomEvent()
-
-}
-
-/* RANDOM EVENTS */
-
-function randomEvent(){
-
-let r=Math.random()
-
-if(r<0.25) fishEvent()
-else if(r<0.45) materialEvent()
-else if(r<0.60) wreckEvent()
-else if(r<0.75) craftEvent()
-else if(r<0.90) nothingEvent()
-else leviathan()
-
-}
-
-/* EVENTS */
-
-function fishEvent(){
-
 setScene(
 
-"<p>A glowing alien fish swims past 🐟</p>",
+"<p>You swim deeper into the alien ocean.</p>",
 
 [
-{text:"Scan creature",action:"scanFish()"},
-{text:"Continue diving",action:"dive()"}
+{text:"Swim North",action:"move('n')"},
+{text:"Swim South",action:"move('s')"},
+{text:"Swim East",action:"move('e')"},
+{text:"Swim West",action:"move('w')"},
+{text:"Return to surface",action:"surface()"},
+{text:"Return to Escape Pod",action:"returnPod()"}
 ]
 
 )
 
 }
 
-function scanFish(){
+/* MAP MOVEMENT */
+
+function move(dir){
+
+if(dir=="n") mapY++
+if(dir=="s") mapY--
+if(dir=="e") mapX++
+if(dir=="w") mapX--
+
+oxygen-=5
+
+checkOxygen()
+
+randomEvent()
+
+}
+
+/* SHALLOW ROUTE */
+
+function shallowDive(){
+
+depth+=20
+oxygen-=5
+
+randomEvent()
+
+}
+
+/* EVENTS */
+
+function randomEvent(){
+
+let r=Math.random()
+
+if(r<0.3) creatureEvent()
+else if(r<0.55) materialEvent()
+else if(r<0.75) wreckEvent()
+else if(r<0.9) calmEvent()
+else leviathan()
+
+}
+
+/* CREATURE */
+
+function creatureEvent(){
+
+setScene(
+
+"<p>A strange glowing creature swims nearby 🐟</p>",
+
+[
+{text:"Scan creature",action:"scanCreature()"},
+{text:"Ignore",action:"explore()"}
+]
+
+)
+
+}
+
+function scanCreature(){
 
 addItem("Creature Scan")
 
 setScene(
 
-"<p>Scan complete! Alien DNA recorded.</p>",
+"<p>New alien species recorded.</p>",
 
 [
-{text:"Continue diving",action:"dive()"}
+{text:"Continue exploring",action:"explore()"}
 ]
 
 )
@@ -314,11 +434,11 @@ let m=materials[Math.floor(Math.random()*materials.length)]
 
 setScene(
 
-`<p>You discover ${m} deposits.</p>`,
+`<p>You find ${m} deposits.</p>`,
 
 [
 {text:`Collect ${m}`,action:`collectMaterial('${m}')`},
-{text:"Ignore and dive",action:"dive()"}
+{text:"Leave",action:"explore()"}
 ]
 
 )
@@ -331,10 +451,10 @@ addItem(m)
 
 setScene(
 
-`<p>${m} added to inventory.</p>`,
+`${m} added to inventory.`,
 
 [
-{text:"Continue diving",action:"dive()"}
+{text:"Continue exploring",action:"explore()"}
 ]
 
 )
@@ -347,11 +467,11 @@ function wreckEvent(){
 
 setScene(
 
-"<p>You find a wrecked research pod.</p>",
+"<p>You discover a damaged research pod.</p>",
 
 [
 {text:"Search wreck",action:"searchWreck()"},
-{text:"Leave",action:"dive()"}
+{text:"Leave",action:"explore()"}
 ]
 
 )
@@ -360,75 +480,32 @@ setScene(
 
 function searchWreck(){
 
-addItem("Data Log")
-
 signal+=20
 
+addItem("Data Log")
+
 setScene(
 
-"<p>You recover research logs from Simon!</p>",
+"<p>You recover Simon's research data.</p>",
 
 [
-{text:"Follow signal deeper",action:"dive()"}
+{text:"Follow signal deeper",action:"explore()"}
 ]
 
 )
 
 }
 
-/* CRAFT */
+/* CALM */
 
-function craftEvent(){
-
-if(inventory.includes("Titanium") && inventory.includes("Fiber") && !inventory.includes("Reinforced Suit")){
+function calmEvent(){
 
 setScene(
 
-"<p>You can craft a Reinforced Suit.</p>",
+"<p>The ocean is quiet.</p>",
 
 [
-{text:"Craft Suit",action:"craftSuit()"},
-{text:"Keep diving",action:"dive()"}
-]
-
-)
-
-return
-
-}
-
-nothingEvent()
-
-}
-
-function craftSuit(){
-
-addItem("Reinforced Suit")
-
-maxOxygen=140
-
-setScene(
-
-"<p>Reinforced Suit crafted! Oxygen capacity increased.</p>",
-
-[
-{text:"Dive deeper",action:"dive()"}
-]
-
-)
-
-}
-
-/* NOTHING */
-
-function nothingEvent(){
-
-setScene(
-
-"<p>The ocean is quiet...</p>",
-
-[
-{text:"Continue diving",action:"dive()"}
+{text:"Continue exploring",action:"explore()"}
 ]
 
 )
@@ -441,7 +518,7 @@ function leviathan(){
 
 setScene(
 
-"<h2>Leviathan attack! 🐉</h2>",
+"<h2>Leviathan Detected 🐉</h2>",
 
 [
 {text:"Evade",action:"evade()"},
@@ -457,13 +534,8 @@ function evade(){
 if(Math.random()<0.5){
 
 setScene(
-
-"<p>You escaped!</p>",
-
-[
-{text:"Swim deeper",action:"dive()"}
-]
-
+"<p>You escape the massive creature!</p>",
+[{text:"Keep exploring",action:"explore()"}]
 )
 
 }
@@ -471,13 +543,8 @@ setScene(
 else{
 
 setScene(
-
-"<p>The creature catches you...</p>",
-
-[
-{text:"Restart",action:"startGame()"}
-]
-
+"<p>The Leviathan catches you.</p>",
+[{text:"Restart",action:"startGame()"}]
 )
 
 }
@@ -487,18 +554,13 @@ setScene(
 function panic(){
 
 setScene(
-
-"<p>You panic and run out of oxygen.</p>",
-
-[
-{text:"Restart",action:"startGame()"}
-]
-
+"<p>You panic and lose control.</p>",
+[{text:"Restart",action:"startGame()"}]
 )
 
 }
 
-/* START GAME */
+/* START */
 
 startGame()
 
