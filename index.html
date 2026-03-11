@@ -2,8 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Subnautica: Expedition Expanded</title>
-
+<title>Subnautica: Genome Expedition</title>
 <style>
 body{
   font-family:Arial;
@@ -26,16 +25,15 @@ button:hover{background:#00e5ff;}
   position:fixed;
   top:10px;left:10px;
   background:#000c;padding:15px;border-radius:10px;
-  width:240px;text-align:left;
+  width:250px;text-align:left;
   font-size:14px;
 }
 #oxygenBar{width:100%;height:14px;background:#333;border-radius:6px;overflow:hidden;}
 #oxygenFill{height:100%;width:100%;background:#00e5ff;transition:0.3s;}
 </style>
 </head>
-
 <body>
-<h1>Subnautica: Expedition Expanded</h1>
+<h1>Subnautica: Genome Expedition</h1>
 
 <div id="hud">
 <b>Depth:</b> <span id="depth">0</span>m<br>
@@ -50,12 +48,13 @@ button:hover{background:#00e5ff;}
 <div id="choices"></div>
 
 <script>
-
 /* GAME STATE */
 let inventory=[];
 let depth=0;
 let oxygen=100;
-let maxDepth=200;
+let maxDepthWithoutSuit=300;
+let maxDepthWithSuit=800;
+let maxDepthWithModule=1200;
 
 /* HELPER FUNCTIONS */
 function updateHUD(){
@@ -65,7 +64,6 @@ function updateHUD(){
   document.getElementById("inventory").innerHTML = inventory.length?inventory.join("<br>"):"None";
   updateBiome();
 }
-
 function updateBiome(){
   let b="Safe Shallows";
   if(depth>100)b="Kelp Forest";
@@ -75,7 +73,6 @@ function updateBiome(){
   if(depth>1100)b="Abyssal Trench";
   document.getElementById("biome").innerText=b;
 }
-
 function setScene(text,options){
   document.getElementById("story").innerHTML=text;
   let btns="";
@@ -83,7 +80,6 @@ function setScene(text,options){
   document.getElementById("choices").innerHTML=btns;
   updateHUD();
 }
-
 function addItem(item){
   if(!inventory.includes(item))inventory.push(item);
   updateHUD();
@@ -91,27 +87,26 @@ function addItem(item){
 
 /* GAME START */
 function startGame(){
-  inventory=[];
-  depth=0; oxygen=100; maxDepth=200;
+  inventory=[]; depth=0; oxygen=100;
   setScene(
-  `<p>Five years ago, your father Simon vanished on Planet 4546-B.</p>
-   <p>You are Max, his son, and an explorer determined to find him.</p>
-   <p>A weak message still reverberates on your PDA: <b>"Max… follow the signal."</b></p>
-   <p>Your ship crashes into the alien ocean below.</p>`,
-   [
-     {text:"Search the escape pod",action:"podSearch()"},
-     {text:"Dive into the water",action:"firstDive()"}
-   ]
+    `<p>Five years ago, your father Simon vanished on Planet 4546-B.</p>
+     <p>You are Max, his son, determined to find him.</p>
+     <p>A weak PDA signal reads: <b>"Max… follow the pulse…"</b></p>
+     <p>Your ship crashes into the alien ocean below.</p>`,
+     [
+       {text:"Search the escape pod",action:"podSearch()"},
+       {text:"Dive immediately",action:"firstDive()"}
+     ]
   );
 }
 
 /* ESCAPE POD */
 function podSearch(){
   setScene(
-    `<p>You search the pod wreck and find gear:</p>`,
+    `<p>You search the pod and find scattered materials:</p>`,
     [
       {text:"Take Repair Tool",action:"takeRepairTool()"},
-      {text:"Take High‑Capacity Tank",action:"takeTank()"},
+      {text:"Take High-Capacity Tank",action:"takeTank()"},
       {text:"Skip gear and dive",action:"firstDive()"}
     ]
   );
@@ -123,11 +118,11 @@ function takeTank(){ addItem("High O₂ Tank"); oxygen=150; firstDive(); }
 function firstDive(){
   depth+=50; oxygen-=5;
   setScene(
-    `<p>You plunge beneath the waves, following the weak signal.</p>
-     <p>Two paths appear ahead:</p>`,
+    `<p>You plunge into the alien ocean.</p>
+     <p>Two paths appear:</p>`,
     [
-      {text:"Explore the Kelp Forest",action:"goKelp()"},
-      {text:"Swim toward the signal directly",action:"diveDeeper()"}
+      {text:"Explore Kelp Forest",action:"goKelp()"},
+      {text:"Swim toward the signal",action:"diveDeeper()"}
     ]
   );
 }
@@ -136,191 +131,146 @@ function firstDive(){
 function goKelp(){
   depth+=120; oxygen-=10;
   setScene(
-    `<p>The Kelp Forest is alive with strange alien creatures.</p>
-     <p>You notice a glowing object on the ocean floor.</p>`,
+    `<p>The Kelp Forest teems with life.</p>
+     <p>You spot glinting materials and strange creatures.</p>`,
     [
-      {text:"Investigate the object",action:"kelpLoot()"},
-      {text:"Continue following the signal",action:"diveDeeper()"}
+      {text:"Collect Fiber",action:"collectFiber()"},
+      {text:"Continue deeper toward signal",action:"diveDeeper()"}
     ]
   );
 }
-function kelpLoot(){
-  addItem("Seamoth Access Pass");
-  setScene(
-    `<p>You found a data shard granting access to a small submersible.</p>
-     <p>This may help in deeper zones.</p>`,
-    [
-      {text:"Return to deeper waters",action:"diveDeeper()"}
-    ]
-  );
-}
+function collectFiber(){ addItem("Fiber"); diveDeeper(); }
 
-/* NORMAL DEEP DIVE */
+/* DEEP DIVE */
 function diveDeeper(){
   depth+=150; oxygen-=15;
-  if(depth>maxDepth){
-    alert("Crushing pressure! You need a better suit.");
-    depth=maxDepth;
+  if(depth>maxDepthWithoutSuit && !inventory.includes("Reinforced Suit")){
+    alert("Pressure is too high! You need a Reinforced Suit.");
+    return;
+  }
+  if(depth>maxDepthWithSuit && !inventory.includes("Depth Module")){
+    alert("Even with Reinforced Suit, you need a Depth Module.");
+    return;
   }
   if(oxygen<=0){ leviathanAttack(); return; }
-  encounter();
+  randomEncounter();
 }
 
 /* RANDOM ENCOUNTERS */
-function encounter(){
+function randomEncounter(){
   let r=Math.random();
   if(r<0.2){
-    setScene(`<p>A shoal of glowing fish swims nearby.</p>`,
-             [{text:"Continue deeper",action:"continueDive()"}]);
+    setScene("<p>A shoal of glowing fish swims by.</p>",[{text:"Continue",action:"continueDive()"}]);
   } else if(r<0.35){
-    setScene(`<p>A stalker predator circles you menacingly.</p>`,
-             [{text:"Evade and swim",action:"continueDive()"}]);
+    setScene("<p>A stalker predator circles menacingly!</p>",[{text:"Evade",action:"continueDive()"}]);
   } else if(r<0.45){
     leviathanAttack();
-  } else {
-    continueDive();
-  }
+  } else { continueDive(); }
 }
+function continueDive(){ setScene(
+  "<p>The signal pulse grows stronger.</p>",
+  [
+    {text:"Descend further",action:"checkProgression()"},
+    {text:"Return to surface",action:"surfaceReturn()"}
+  ]
+);}
 
-function continueDive(){
-  setScene(
-    `<p>The signal pulse grows stronger as you descend.</p>`,
-    [
-      {text:"Go further down",action:"checkProgression()"},
-      {text:"Return to surface",action:"surfaceReturn()"}
-    ]
-  );
-}
-
-/* PROGRESSION CHECK */
+/* PROGRESSION & MATERIALS */
 function checkProgression(){
-  if(depth<400){ diveDeeper(); return; }
-  if(depth>=400 && !inventory.includes("Prawn Suit")){
-    setScene(
-      `<p>A ruined base contains an intact <b>Prawn Suit</b>.</p>`,
-      [{text:"Take the Prawn Suit",action:"takePrawn()"}]
-    );
-  } else if(depth>=800 && inventory.includes("Seamoth Access Pass")){
-    findSimon();
-  } else {
-    diveDeeper();
+  if(depth>=400 && !inventory.includes("Reinforced Suit") && inventory.includes("Fiber") && inventory.includes("Metal Fragments")){
+    craftReinforcedSuit();
+    return;
   }
+  if(depth>=400 && !inventory.includes("Prawn Suit")){
+    setScene("<p>A ruined base contains a Prawn Suit.</p>",[{text:"Take Prawn Suit",action:"takePrawn()"}]);
+    return;
+  }
+  if(depth>=800 && inventory.includes("Seamoth Access Pass")) findSimon();
+  else diveDeeper();
 }
 
-/* ITEM LOCATIONS */
-function takePrawn(){
-  addItem("Prawn Suit");
-  maxDepth=1200;
-  setScene(
-    `<p>Prawn Suit acquired! You can now safely reach deeper zones.</p>`,
-    [{text:"Push further down",action:"checkProgression()"}]
-  );
+function craftReinforcedSuit(){
+  addItem("Reinforced Suit");
+  maxDepthWithSuit=800;
+  setScene("<p>You craft a Reinforced Suit! You can dive deeper now.</p>",[{text:"Continue",action:"diveDeeper()"}]);
 }
 
-/* FIND SIMON */
+function takePrawn(){ addItem("Prawn Suit"); maxDepthWithModule=1200; setScene("<p>Prawn Suit acquired!</p>",[{text:"Continue",action:"diveDeeper()"}]);}
+
+/* FIND SIMON & SECRETS */
 function findSimon(){
   setScene(
-    `<p>You reach a hidden cavern glowing with alien lights.</p>
-     <p>A research base appears in the shadows.</p>
-     <p>Your PDA blares your father’s voice.</p>`,
-    [
-      {text:"Enter the base",action:"baseEntry()"}
-    ]
+    "<p>You discover Simon's hidden research base.</p>",
+    [{text:"Enter base",action:"baseEntry()"}]
   );
 }
-
 function baseEntry(){
   setScene(
-    `<p>Inside the base, you find Simon's old logs detailing alien tech.</p>
-     <p>You may either reunite with him or explore the logs more.</p>`,
+    `<p>Inside, you find logs describing:</p>
+     <ul>
+       <li>Ancient alien civilization</li>
+       <li>Genome antidote hidden in the abyss</li>
+     </ul>`,
     [
-      {text:"Reunite with Simon",action:"reunion()"},
-      {text:"Investigate logs further",action:"deepLogs()"}
+      {text:"Search for Simon",action:"reunion()"},
+      {text:"Explore logs & secrets",action:"exploreSecrets()"}
     ]
   );
 }
 
-function deepLogs(){
+function exploreSecrets(){
   setScene(
-    `<p>You uncover hidden records of alien monoliths and ancient energy sources.</p>`,
+    "<p>You discover materials for a rocket and clues to the genome antidote.</p>",
     [
-      {text:"Look for Simon now",action:"reunion()"},
-      {text:"Explore the abyssal trench",action:"abyssAdventure()"}
+      {text:"Collect Rocket Materials",action:"collectRocketParts()"},
+      {text:"Search for Genome Antidote",action:"collectGenome()"},
+      {text:"Go to Simon",action:"reunion()"}
     ]
   );
 }
 
-function abyssAdventure(){
-  setScene(
-    `<p>You dive into the deepest trench ever mapped.</p>
-     <p>An alien monolith glows with mysterious power.</p>`,
-    [
-      {text:"Attempt to understand it",action:"mysticEnding()"},
-      {text:"Retreat to Simon's base",action:"reunion()"}
-    ]
-  );
-}
+function collectRocketParts(){ addItem("Rocket Components"); exploreSecrets(); }
+function collectGenome(){ addItem("Genome Antidote"); exploreSecrets(); }
 
-/* ENDINGS */
+/* REUNION & ENDINGS */
 function reunion(){
+  addItem("Simon"); // father found
   setScene(
-    `<h2>Reunion</h2><p>You find Simon alive!</p>`,
+    "<p>You find Simon alive!</p>",
     [
-      {text:"Escape together",action:"escapeTogether()"},
-      {text:"Stay and investigate the planet",action:"stayHere()"}
+      {text:"Escape Planet",action:"escapePlanet()"},
+      {text:"Stay on Planet",action:"stayPlanet()"},
+      {text:"Explore Alien Monolith",action:"mysticEnding()"}
     ]
   );
 }
 
-function escapeTogether(){
-  if(inventory.includes("Repair Tool")){
-    setScene(
-      `<h2>True Escape</h2>
-       <p>Using alien tech and your Repair Tool, you launch a rescue beacon.</p>
-       <p>Help arrives and you escape the planet together!</p>`,[]
-    );
-  } else {
-    setScene(
-      `<h2>No Escape</h2>
-       <p>Without the Repair Tool, the rescue fails. You remain stranded.</p>`,[]
-    );
+function escapePlanet(){
+  if(inventory.includes("Rocket Components") && inventory.includes("Genome Antidote")){
+    setScene("<h2>Best Ending!</h2><p>You launch the rocket, taking Simon and the genome. Humanity will be saved!</p>",[]);
+  } else if(inventory.includes("Rocket Components")){
+    setScene("<h2>Second Best Ending</h2><p>You escape with Simon, but no genome. Planet remains unexplored.</p>",[]);
+  } else{
+    setScene("<h2>Fail: Stranded</h2><p>You cannot leave without rocket parts! Forced to remain.</p>",[]);
   }
 }
 
-function stayHere(){
-  setScene(
-    `<h2>New Home</h2>
-     <p>You and Simon build a deep-sea research station.</p>
-     <p>The ocean becomes your new world.</p>`,[]
-  );
+function stayPlanet(){
+  setScene("<h2>Third Best Ending</h2><p>You and Simon build a deep-sea base and remain on Planet 4546-B.</p>",[]);
 }
 
 function mysticEnding(){
-  setScene(
-    `<h2>Mystic Ending</h2>
-     <p>The alien monolith transforms your consciousness.</p>
-     <p>You merge with the ocean, exploring it eternally.</p>`,[]
-  );
+  setScene("<h2>Mystic Ending</h2><p>You merge with ancient alien consciousness in the monolith, exploring the ocean forever.</p>",[]);
 }
 
 function leviathanAttack(){
-  setScene(
-    `<h2>Leviathan</h2><p>A massive shadow engulfs you from below.</p>`,
-    [{text:"Restart",action:"startGame()"}]
-  );
+  setScene("<h2>Leviathan!</h2><p>A massive creature engulfs you.</p>",[{text:"Restart",action:"startGame()"}]);
 }
 
-function surfaceReturn(){
-  oxygen=100;
-  setScene(
-    `<p>You return to the surface to recover.</p>`,
-    [{text:"Dive again",action:"firstDive()"}]
-  );
-}
+function surfaceReturn(){ oxygen=100; setScene("<p>You return to surface and plan next dive.</p>",[{text:"Dive again",action:"firstDive()"}]);}
 
-/* START */
+/* START GAME */
 startGame();
-
 </script>
 </body>
 </html>
