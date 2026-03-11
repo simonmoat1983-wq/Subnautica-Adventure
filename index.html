@@ -5,41 +5,36 @@
 <title>Subnautica: Expedition Expanded</title>
 
 <style>
-
 body{
-font-family:Arial;
-background:linear-gradient(#001018,#003a4f);
-color:white;
-text-align:center;
-padding:30px;
+  font-family:Arial;
+  background:linear-gradient(#001018,#003a4f);
+  color:white;
+  text-align:center;
+  padding:30px;
 }
-
 button{
-padding:12px 18px;
-margin:8px;
-font-size:16px;
-background:#00bcd4;
-border:none;
-border-radius:8px;
-cursor:pointer;
+  padding:12px 18px;
+  margin:8px;
+  font-size:16px;
+  background:#00bcd4;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
 }
 button:hover{background:#00e5ff;}
-
 #hud{
-position:fixed;
-top:10px;left:10px;
-background:#000c;padding:15px;border-radius:10px;
-width:230px;text-align:left;
-font-size:14px;
+  position:fixed;
+  top:10px;left:10px;
+  background:#000c;padding:15px;border-radius:10px;
+  width:240px;text-align:left;
+  font-size:14px;
 }
 #oxygenBar{width:100%;height:14px;background:#333;border-radius:6px;overflow:hidden;}
 #oxygenFill{height:100%;width:100%;background:#00e5ff;transition:0.3s;}
-
 </style>
 </head>
 
 <body>
-
 <h1>Subnautica: Expedition Expanded</h1>
 
 <div id="hud">
@@ -63,281 +58,269 @@ let oxygen=100;
 let maxDepth=200;
 
 /* HELPER FUNCTIONS */
-
 function updateHUD(){
- document.getElementById("depth").innerText=depth;
- document.getElementById("oxygenFill").style.width=oxygen+"%";
- document.getElementById("signal").innerText=Math.min(Math.floor(depth/4),100);
- document.getElementById("inventory").innerHTML =
-  inventory.length?inventory.join("<br>"):"None";
- updateBiome();
+  document.getElementById("depth").innerText=depth;
+  document.getElementById("oxygenFill").style.width=oxygen+"%";
+  document.getElementById("signal").innerText=Math.min(Math.floor(depth/4),100);
+  document.getElementById("inventory").innerHTML = inventory.length?inventory.join("<br>"):"None";
+  updateBiome();
 }
 
 function updateBiome(){
- let b="Safe Shallows";
- if(depth>100)b="Kelp Forest";
- if(depth>250)b="Crash Zone";
- if(depth>500)b="Deep Cave";
- if(depth>800)b="Old Wreck";
- if(depth>1100)b="Abyssal Trench";
- document.getElementById("biome").innerText=b;
+  let b="Safe Shallows";
+  if(depth>100)b="Kelp Forest";
+  if(depth>250)b="Crash Zone";
+  if(depth>500)b="Deep Cave";
+  if(depth>800)b="Old Wreck";
+  if(depth>1100)b="Abyssal Trench";
+  document.getElementById("biome").innerText=b;
 }
 
 function setScene(text,options){
- document.getElementById("story").innerHTML=text;
- let btns="";
- options.forEach(o=>btns+=`<button onclick="${o.action}">${o.text}</button>`);
- document.getElementById("choices").innerHTML=btns;
- updateHUD();
+  document.getElementById("story").innerHTML=text;
+  let btns="";
+  options.forEach(o=>btns+=`<button onclick="${o.action}">${o.text}</button>`);
+  document.getElementById("choices").innerHTML=btns;
+  updateHUD();
 }
 
 function addItem(item){
- if(!inventory.includes(item))inventory.push(item);
- updateHUD();
+  if(!inventory.includes(item))inventory.push(item);
+  updateHUD();
 }
 
 /* GAME START */
-
 function startGame(){
- inventory=[];
- depth=0; oxygen=100; maxDepth=200;
- setScene(
- `<p>Five years ago Simon vanished on Planet 4546-B.</p>
-  <p>You are Max — his daughter, explorer, and never one to give up.</p>
-  <p>A weak message still reverberates on your PDA: <b>"Max… follow the signal."</b></p>
-  <p>You crash your ship in orbit and land in the alien ocean below.</p>`,
- [
-   {text:"Search the escape pod",action:"podSearch()"},
-   {text:"Dive into the water",action:"firstDive()"}
- ]
- );
+  inventory=[];
+  depth=0; oxygen=100; maxDepth=200;
+  setScene(
+  `<p>Five years ago, your father Simon vanished on Planet 4546-B.</p>
+   <p>You are Max, his son, and an explorer determined to find him.</p>
+   <p>A weak message still reverberates on your PDA: <b>"Max… follow the signal."</b></p>
+   <p>Your ship crashes into the alien ocean below.</p>`,
+   [
+     {text:"Search the escape pod",action:"podSearch()"},
+     {text:"Dive into the water",action:"firstDive()"}
+   ]
+  );
 }
 
 /* ESCAPE POD */
-
 function podSearch(){
- setScene(
-   `<p>You search the pod wreck.</p>
-    <p>Inside you find gear:</p>`,
-   [
-     {text:"Take Repair Tool",action:"takeRepairTool()"},
-     {text:"Take High‑Capacity Tank",action:"takeTank()"},
-     {text:"Skip gear and dive",action:"firstDive()"}
-   ]
- );
+  setScene(
+    `<p>You search the pod wreck and find gear:</p>`,
+    [
+      {text:"Take Repair Tool",action:"takeRepairTool()"},
+      {text:"Take High‑Capacity Tank",action:"takeTank()"},
+      {text:"Skip gear and dive",action:"firstDive()"}
+    ]
+  );
 }
 function takeRepairTool(){ addItem("Repair Tool"); firstDive(); }
 function takeTank(){ addItem("High O₂ Tank"); oxygen=150; firstDive(); }
 
 /* FIRST DIVE */
-
 function firstDive(){
- setScene(
-   `<p>You plunge beneath the waves.</p>
-    <p>Two paths open ahead.</p>`,
-   [
-     {text:"Explore the Kelp Forest",action:"goKelp()"},
-     {text:"Swim toward the signal",action:"diveDeeper()"}
-   ]
- );
+  depth+=50; oxygen-=5;
+  setScene(
+    `<p>You plunge beneath the waves, following the weak signal.</p>
+     <p>Two paths appear ahead:</p>`,
+    [
+      {text:"Explore the Kelp Forest",action:"goKelp()"},
+      {text:"Swim toward the signal directly",action:"diveDeeper()"}
+    ]
+  );
 }
 
 /* KELP FOREST */
-
 function goKelp(){
- depth+=120; oxygen-=10;
- setScene(
-   `<p>The Kelp Forest is teeming with strange life.</p>
-    <p>A glint appears on the ocean floor.</p>`,
-   [
-     {text:"Investigate the glint",action:"kelpLoot()"},
-     {text:"Keep following the signal",action:"diveDeeper()"}
-   ]
- );
+  depth+=120; oxygen-=10;
+  setScene(
+    `<p>The Kelp Forest is alive with strange alien creatures.</p>
+     <p>You notice a glowing object on the ocean floor.</p>`,
+    [
+      {text:"Investigate the object",action:"kelpLoot()"},
+      {text:"Continue following the signal",action:"diveDeeper()"}
+    ]
+  );
 }
 function kelpLoot(){
- addItem("Seamoth Access Pass");
- setScene(
-   `<p>You found a data shard — it grants access to a full sub!</p>`,
-   [
-     {text:"Return to deeper waters",action:"diveDeeper()"}
-   ]
- );
+  addItem("Seamoth Access Pass");
+  setScene(
+    `<p>You found a data shard granting access to a small submersible.</p>
+     <p>This may help in deeper zones.</p>`,
+    [
+      {text:"Return to deeper waters",action:"diveDeeper()"}
+    ]
+  );
 }
 
 /* NORMAL DEEP DIVE */
-
 function diveDeeper(){
- depth+=150; oxygen-=15;
- if(depth>maxDepth){
-   alert("Crushing pressure! You need better suit!");
-   depth=maxDepth;
- }
- if(oxygen<=0){ leviathanAttack(); return; }
- encounter();
+  depth+=150; oxygen-=15;
+  if(depth>maxDepth){
+    alert("Crushing pressure! You need a better suit.");
+    depth=maxDepth;
+  }
+  if(oxygen<=0){ leviathanAttack(); return; }
+  encounter();
 }
 
 /* RANDOM ENCOUNTERS */
-
 function encounter(){
- let r=Math.random();
- if(r<0.2){
-   setScene(`<p>A shoal of glowing fish swims by.</p>`,[{text:"Continue deeper",action:"continueDive()"}]);
- } else if(r<0.35){
-   setScene(`<p>A stalker circles your path menacingly.</p>`,[{text:"Evade and swim",action:"continueDive()"}]);
- } else if(r<0.45){
-   leviathanAttack();
- } else {
-   continueDive();
- }
+  let r=Math.random();
+  if(r<0.2){
+    setScene(`<p>A shoal of glowing fish swims nearby.</p>`,
+             [{text:"Continue deeper",action:"continueDive()"}]);
+  } else if(r<0.35){
+    setScene(`<p>A stalker predator circles you menacingly.</p>`,
+             [{text:"Evade and swim",action:"continueDive()"}]);
+  } else if(r<0.45){
+    leviathanAttack();
+  } else {
+    continueDive();
+  }
 }
+
 function continueDive(){
- setScene(
-   `<p>The signal pulse grows stronger as you dive deeper.</p>`,
-   [
-     {text:"Descend further",action:"checkProgression()"},
-     {text:"Return toward surface",action:"surfaceReturn()"}
-   ]
- );
+  setScene(
+    `<p>The signal pulse grows stronger as you descend.</p>`,
+    [
+      {text:"Go further down",action:"checkProgression()"},
+      {text:"Return to surface",action:"surfaceReturn()"}
+    ]
+  );
 }
 
 /* PROGRESSION CHECK */
-
 function checkProgression(){
- if(depth<400){ diveDeeper(); return; }
- if(depth>=400 && !inventory.includes("Prawn Suit")){
-   setScene(
-     `<p>A ruined base contains an intact <b>Prawn Suit</b>.</p>`,
-     [{text:"Take the Prawn Suit",action:"takePrawn()"}]
-   );
- } else if(depth>=800 && inventory.includes("Seamoth Access Pass")){
-   findSimon();
- } else {
-   diveDeeper();
- }
+  if(depth<400){ diveDeeper(); return; }
+  if(depth>=400 && !inventory.includes("Prawn Suit")){
+    setScene(
+      `<p>A ruined base contains an intact <b>Prawn Suit</b>.</p>`,
+      [{text:"Take the Prawn Suit",action:"takePrawn()"}]
+    );
+  } else if(depth>=800 && inventory.includes("Seamoth Access Pass")){
+    findSimon();
+  } else {
+    diveDeeper();
+  }
 }
 
 /* ITEM LOCATIONS */
-
 function takePrawn(){
- addItem("Prawn Suit");
- maxDepth=1200;
- setScene(
-   `<p>Prawn Suit acquired! You can now go deeper.</p>`,
-   [{text:"Push further down",action:"checkProgression()"}]
- );
+  addItem("Prawn Suit");
+  maxDepth=1200;
+  setScene(
+    `<p>Prawn Suit acquired! You can now safely reach deeper zones.</p>`,
+    [{text:"Push further down",action:"checkProgression()"}]
+  );
 }
 
 /* FIND SIMON */
-
 function findSimon(){
- setScene(
-   `<p>You reach a massive ocean cavern.</p>
-    <p>A research base emerges from darkness.</p>
-    <p>Your PDA blares your father’s voice.</p>`,
-   [
-     {text:"Enter the base",action:"baseEntry()"}
-   ]
- );
+  setScene(
+    `<p>You reach a hidden cavern glowing with alien lights.</p>
+     <p>A research base appears in the shadows.</p>
+     <p>Your PDA blares your father’s voice.</p>`,
+    [
+      {text:"Enter the base",action:"baseEntry()"}
+    ]
+  );
 }
 
 function baseEntry(){
- setScene(
-   `<p>Inside the base, you find old logs left by Simon.</p>
-    <p>He was studying alien tech before losing contact.</p>`,
-   [
-     {text:"Reunite with Simon",action:"reunion()"},
-     {text:"Search for more clues",action:"deepLogs()"}
-   ]
- );
+  setScene(
+    `<p>Inside the base, you find Simon's old logs detailing alien tech.</p>
+     <p>You may either reunite with him or explore the logs more.</p>`,
+    [
+      {text:"Reunite with Simon",action:"reunion()"},
+      {text:"Investigate logs further",action:"deepLogs()"}
+    ]
+  );
 }
 
 function deepLogs(){
- setScene(
-   `<p>You uncover hidden records detailing strange alien architecture.</p>
-    <p>This may be the real reason Simon stayed here...</p>`,
-   [
-     {text:"Look for Simon now",action:"reunion()"},
-     {text:"Explore even further",action:"abyssAdventure()"}
-   ]
- );
+  setScene(
+    `<p>You uncover hidden records of alien monoliths and ancient energy sources.</p>`,
+    [
+      {text:"Look for Simon now",action:"reunion()"},
+      {text:"Explore the abyssal trench",action:"abyssAdventure()"}
+    ]
+  );
 }
+
 function abyssAdventure(){
- setScene(
-   `<p>You dive into the deepest trench ever mapped.</p>
-    <p>Alien monolith glows with unseen power.</p>`,
-   [
-     {text:"Attempt to understand it",action:"mysticEnding()"},
-     {text:"Retreat to Simon's base",action:"reunion()"}
-   ]
- );
+  setScene(
+    `<p>You dive into the deepest trench ever mapped.</p>
+     <p>An alien monolith glows with mysterious power.</p>`,
+    [
+      {text:"Attempt to understand it",action:"mysticEnding()"},
+      {text:"Retreat to Simon's base",action:"reunion()"}
+    ]
+  );
 }
 
 /* ENDINGS */
-
 function reunion(){
- setScene(
-   `<h2>Reunion</h2>
-    <p>You find Simon alive!</p>`,
-   [
-     {text:"Escape together",action:"escapeTogether()"},
-     {text:"Stay and investigate the planet",action:"stayHere()"}
-   ]
- );
+  setScene(
+    `<h2>Reunion</h2><p>You find Simon alive!</p>`,
+    [
+      {text:"Escape together",action:"escapeTogether()"},
+      {text:"Stay and investigate the planet",action:"stayHere()"}
+    ]
+  );
 }
 
 function escapeTogether(){
- if(inventory.includes("Repair Tool")){
-   setScene(
-     `<h2>True Escape</h2>
-      <p>Using alien tech and your Repair Tool, you launch a beacon signal.</p>
-      <p>Help arrives and you escape the planet together!</p>`,[]
-   );
- } else {
-   setScene(
-     `<h2>No Escape</h2>
-      <p>With no Repair Tool, rescue never comes...</p>`,[]
-   );
- }
+  if(inventory.includes("Repair Tool")){
+    setScene(
+      `<h2>True Escape</h2>
+       <p>Using alien tech and your Repair Tool, you launch a rescue beacon.</p>
+       <p>Help arrives and you escape the planet together!</p>`,[]
+    );
+  } else {
+    setScene(
+      `<h2>No Escape</h2>
+       <p>Without the Repair Tool, the rescue fails. You remain stranded.</p>`,[]
+    );
+  }
 }
 
 function stayHere(){
- setScene(
-   `<h2>New Home</h2>
-    <p>You and Simon build a deep‑sea research station.</p>
-    <p>The ocean becomes your new world.</p>`,[]
- );
+  setScene(
+    `<h2>New Home</h2>
+     <p>You and Simon build a deep-sea research station.</p>
+     <p>The ocean becomes your new world.</p>`,[]
+  );
 }
 
 function mysticEnding(){
- setScene(
-   `<h2>Mystic Ending</h2>
-    <p>The alien monolith transforms you.</p>
-    <p>Your consciousness merges with the ocean.</p>`,[]
- );
+  setScene(
+    `<h2>Mystic Ending</h2>
+     <p>The alien monolith transforms your consciousness.</p>
+     <p>You merge with the ocean, exploring it eternally.</p>`,[]
+  );
 }
 
 function leviathanAttack(){
- setScene(
-   `<h2>Leviathan</h2><p>A massive form engulfs you.</p>`,
-   [{text:"Restart",action:"startGame()"}]
- );
+  setScene(
+    `<h2>Leviathan</h2><p>A massive shadow engulfs you from below.</p>`,
+    [{text:"Restart",action:"startGame()"}]
+  );
 }
 
 function surfaceReturn(){
- oxygen=100;
- setScene(
-   `<p>You return to the surface to recover and plan next dive.</p>`,
-   [{text:"Dive again",action:"firstDive()"}]
- );
+  oxygen=100;
+  setScene(
+    `<p>You return to the surface to recover.</p>`,
+    [{text:"Dive again",action:"firstDive()"}]
+  );
 }
 
 /* START */
-
 startGame();
 
 </script>
-
 </body>
 </html>
-```
